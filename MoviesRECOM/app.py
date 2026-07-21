@@ -4,17 +4,17 @@ import requests
 from urllib.parse import quote
 import os
 
-st.set_page_config(
+st.set_page_config(                      #Configure/set up the streamlit app
     page_title="Movie Recommender",
     page_icon="🎬",
     layout="wide"
 )
 
-# Read API key from Streamlit Secrets
-API_KEY = st.secrets["TMDB_API_KEY"]
+
+API_KEY = st.secrets["TMDB_API_KEY"]     #Reads the key securely from streamlit secrets
 
 
-def clean_title(title):
+def clean_title(title):                      #clean movie title before searching on tmdb
     title = title.rsplit("(", 1)[0].strip()
 
     if title.endswith(", The"):
@@ -27,7 +27,7 @@ def clean_title(title):
     return title
 
 
-def poster(movie):
+def poster(movie):                           #fetch movie posters from tmdb api
     try:
         movie = clean_title(movie)
 
@@ -47,7 +47,7 @@ def poster(movie):
         return None
 
 
-@st.cache_data
+@st.cache_data                                                #load and process the movie DB
 def load():
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -61,15 +61,15 @@ def load():
         os.path.join(BASE_DIR, "Movie_Id_Titles.csv")
     )
 
-    data = ratings.merge(movies, on="item_id")
+    data = ratings.merge(movies, on="item_id")                 #merge ratings with movie titles
 
-    moviemat = data.pivot_table(
+    moviemat = data.pivot_table(                               #creates a table of users and their movie ratings
         index="user_id",
         columns="title",
         values="rating"
     )
 
-    stats = data.groupby("title")["rating"].agg(["mean", "count"])
+    stats = data.groupby("title")["rating"].agg(["mean", "count"])          #calculates average rating N rating count for each movie
 
     return moviemat, stats
 
@@ -93,7 +93,7 @@ if st.button("Recommend"):
         st.error("Please select a movie first.")
 
     else:
-        corr = moviemat.corrwith(moviemat[selected]).dropna()
+        corr = moviemat.corrwith(moviemat[selected]).dropna()            #calculates similarity using collaborative filtering
         corr = corr.to_frame("Correlation")
         corr = corr.join(stats["count"])
         corr = corr[corr["count"] > 100]
@@ -105,7 +105,7 @@ if st.button("Recommend"):
 
         cols = st.columns(5)
 
-        for i, name in enumerate(recommendations):
+        for i, name in enumerate(recommendations):                      #Display recommended movies with posters
             with cols[i % 5]:
                 img = poster(name)
 
@@ -116,4 +116,4 @@ if st.button("Recommend"):
 
                 st.markdown(f"**{name}**")
 
-st.caption("Built By: Nangbun Bareh")
+st.caption("Developed By: Nangbun Bareh")
