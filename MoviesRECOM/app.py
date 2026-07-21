@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import requests
 from urllib.parse import quote
+import os
 
 st.set_page_config(
     page_title="Movie Recommender",
@@ -9,14 +10,13 @@ st.set_page_config(
     layout="wide"
 )
 
-API_KEY = "b3dd044ee3a2f261651808bfe9d79309"
+# Read API key from Streamlit Secrets
+API_KEY = st.secrets["TMDB_API_KEY"]
 
 
 def clean_title(title):
-    # Remove year e.g. (1994)
     title = title.rsplit("(", 1)[0].strip()
 
-    # Move articles to the front
     if title.endswith(", The"):
         title = "The " + title[:-5]
     elif title.endswith(", A"):
@@ -31,13 +31,15 @@ def poster(movie):
     try:
         movie = clean_title(movie)
 
-        r = requests.get(
-            f"https://api.themoviedb.org/3/search/movie?api_key={API_KEY}&query={quote(movie)}",
-            timeout=5
-        ).json()["results"]
+        url = (
+            f"https://api.themoviedb.org/3/search/movie"
+            f"?api_key={API_KEY}&query={quote(movie)}"
+        )
 
-        if r and r[0].get("poster_path"):
-            return f"https://image.tmdb.org/t/p/w500{r[0]['poster_path']}"
+        r = requests.get(url, timeout=5).json()
+
+        if r.get("results") and r["results"][0].get("poster_path"):
+            return f"https://image.tmdb.org/t/p/w500{r['results'][0]['poster_path']}"
 
         return None
 
@@ -47,13 +49,17 @@ def poster(movie):
 
 @st.cache_data
 def load():
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
     ratings = pd.read_csv(
-        "file.tsv",
+        os.path.join(BASE_DIR, "file.tsv"),
         sep="\t",
         names=["user_id", "item_id", "rating", "timestamp"]
     )
 
-    movies = pd.read_csv("Movie_Id_Titles.csv")
+    movies = pd.read_csv(
+        os.path.join(BASE_DIR, "Movie_Id_Titles.csv")
+    )
 
     data = ratings.merge(movies, on="item_id")
 
