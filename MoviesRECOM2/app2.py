@@ -15,7 +15,7 @@ st.set_page_config(
 
 
 # TMDB API Key
-API_KEY = "b3dd044ee3a2f261651808bfe9d79309"
+API_KEY = st.secrets["TMDB_API_KEY"] 
 
 
 # Function to Fetch Movie Poster
