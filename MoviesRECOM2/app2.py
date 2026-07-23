@@ -151,7 +151,4 @@ if st.button("Recommend"):
         except Exception as e:
             st.error(f"Error: {e}")
 
-# -------------------------------
-# Footer
-# -------------------------------
 st.caption("Developed By: Nangbun Bareh")
